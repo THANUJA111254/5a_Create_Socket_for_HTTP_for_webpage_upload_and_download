@@ -15,47 +15,9 @@ To write a PYTHON program for socket for HTTP for web page upload and download
 <BR>
 6.Stop the program
 <BR>
-## Program :
-## SERVER:
-```
-import socket
+## PROGRAM:
 
-def start_server(host='localhost', port=8080):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
-        server.bind((host, port))
-        server.listen(1)
-        print(f"Server running on {host}:{port}")
-        
-        while True:
-            conn, addr = server.accept()
-            with conn:
-                print(f"Connected by {addr}")
-                data = conn.recv(4096).decode()
-                if not data:
-                    break
-
-                # Save uploaded file content (after headers)
-                if "POST /upload" in data:
-                    content = data.split('\r\n\r\n', 1)[1]
-                    with open("received.txt", "w") as f:
-                        f.write(content)
-                    conn.sendall(b"HTTP/1.1 200 OK\r\n\r\nFile uploaded successfully.")
-
-                elif "GET /" in data:
-                    filename = data.split("GET /", 1)[1].split(" ", 1)[0]
-                    try:
-                        with open(filename, "r") as f:
-                            content = f.read()
-                        response = f"HTTP/1.1 200 OK\r\n\r\n{content}"
-                    except FileNotFoundError:
-                        response = "HTTP/1.1 404 Not Found\r\n\r\nFile not found."
-                    conn.sendall(response.encode())
-
-if __name__ == "__main__":
-    start_server()
-```
-## CLIENT:
-```
+```py 
 import socket
 
 def send_request(host, port, request):
@@ -66,39 +28,37 @@ def send_request(host, port, request):
     return response
 
 def upload_file(host, port, filename):
-    with open(filename, 'r') as file:
+    with open(filename, 'rb') as file:
         file_data = file.read()
         content_length = len(file_data)
         request = f"POST /upload HTTP/1.1\r\nHost: {host}\r\nContent-Length: {content_length}\r\n\r\n"
-        request += file_data
+        request += file_data.decode()
         response = send_request(host, port, request)
     return response
 
 def download_file(host, port, filename):
     request = f"GET /{filename} HTTP/1.1\r\nHost: {host}\r\n\r\n"
     response = send_request(host, port, request)
+    # Assuming the response contains the file content after the headers
     file_content = response.split('\r\n\r\n', 1)[1]
-    with open("downloaded_" + filename, 'w') as file:
-        file.write(file_content)
+    with open(filename, 'wb') as file:
+        file.write(file_content.encode())
 
 if __name__ == "__main__":
-    host = 'localhost'
-    port = 8080
+    host = '93.184.216.34'
+    port = 80
 
-    
+    # Upload file
     upload_response = upload_file(host, port, 'example.txt')
     print("Upload response:", upload_response)
 
-
-    download_file(host, port, 'received.txt')
+    # Download file
+    download_file(host, port, 'example.txt')
     print("File downloaded successfully.")
 ```
 
-
 ## OUTPUT:
-<img width="873" height="394" alt="image" src="https://github.com/user-attachments/assets/5231980e-102f-47f7-84eb-21dbc2f4a70c" />
-
-<img width="1029" height="403" alt="image" src="https://github.com/user-attachments/assets/291e9c4c-6ad2-4e31-8307-057bbeedcf89" />
+![image](https://github.com/user-attachments/assets/9615f751-a790-4861-a1b0-ee96be4932e7)
 
 
 
